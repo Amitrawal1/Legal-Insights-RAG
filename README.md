@@ -1,17 +1,17 @@
-# Legal Decision RAG
+# Legal-Insights-RAG (India)
 
-Sistema de **Retrieval-Augmented Generation (RAG)** para consulta e análise de decisões administrativas relacionadas a recursos de multas.
+A **Retrieval-Augmented Generation (RAG)** system for querying and analyzing Indian legal decisions, case laws, and statutory documents.
 
-O sistema permite realizar perguntas em linguagem natural e obter respostas baseadas em documentos jurídicos indexados, utilizando recuperação semântica e geração por LLM.
+This system allows users to ask natural language questions and receive accurate answers grounded in indexed Indian legal documents, utilizing semantic search, lexical retrieval, and local LLM generation.
 
-## Arquitetura
+## Architecture
 
-O projeto utiliza uma arquitetura de **RAG híbrido**, combinando busca vetorial e busca lexical.
+The project relies on a **Hybrid RAG architecture**, combining vector search (semantic) with lexical search (keyword-based) to handle the complexities of Indian legal terminology.
 
-Pipeline:
+Data Pipeline:
 
 ```
-PDFs
+PDFs (Judgments/Acts)
 ↓
 Loader
 ↓
@@ -27,183 +27,150 @@ Reranker
 ↓
 LLM
 ↓
-Resposta
+Output
 ```
 
-## Tecnologias utilizadas
+## Tech Stack
 
 * Python
-* LangChain
-* FAISS
-* Sentence Transformers
-* BM25 Retriever
-* CrossEncoder Reranker
-* Ollama (LLM local)
-* UV (gerenciador de dependências)
+* LangChain (Orchestration framework)
+* FAISS (Local vector database)
+* Sentence Transformers (Embedding generation)
+* BM25 Retriever (Lexical/keyword search)
+* CrossEncoder Reranker (Context optimization)
+* Ollama (Local LLM for privacy and cost-efficiency)
+* UV (Lightning-fast Python package manager)
 
-**Principais bibliotecas:**
-
+**Core Libraries:**
 * langchain
 * langchain-community
 * faiss-cpu
 * sentence-transformers
 * pymupdf
 
-## Estrutura do projeto
+## Project Structure
 
-```
-legal-decision-rag/
+```text
+legal-insights-rag/
 │
 ├── data/
 │   └── raw/
-│       └── pdfs
+│       └── pdfs               # Place Indian judgments (e.g., from eCourts/IndiaKanoon) here
 │
-├── vector_store/
+├── vector_store/              # FAISS index files will be saved here
 │
-├── notebooks/
+├── notebooks/                 # Jupyter notebooks for testing and EDA
 │
 ├── src/
-│
 │   ├── ingestion/
-│   │   ├── pdf_loader.py
-│   │   └── chunking.py
+│   │   ├── pdf_loader.py      # Extracts text from legal PDFs
+│   │   └── chunking.py        # Splits text (semantic chunking recommended for legal text)
 │   │
 │   ├── embeddings/
-│   │   └── embedding_model.py
+│   │   └── embedding_model.py # Initializes HuggingFace sentence-transformers
 │   │
 │   ├── vector_store/
-│   │   └── faiss_store.py
+│   │   └── faiss_store.py     # Manages the FAISS index
 │   │
 │   ├── retrievers/
-│   │   └── hybrid_retriever.py
+│   │   └── hybrid_retriever.py# Combines BM25 and FAISS
 │   │
 │   ├── reranker/
-│   │   └── cross_encoder.py
+│   │   └── cross_encoder.py   # Re-ranks the combined results
 │   │
 │   ├── prompts/
-│   │   └── legal_prompt.py
+│   │   └── legal_prompt.py    # System prompts tailored to Indian law
 │   │
 │   └── rag/
-│       └── rag_chain.py
+│       └── rag_chain.py       # The final LangChain orchestration
 │
 ├── scripts/
-│   ├── build_index.py
+│   ├── build_index.py         # Script to run ingestion and build FAISS
 │
-└── main.py
+└── main.py                    # Application entry point
 ```
 
-## Instalação
+## Installation & Setup
 
-Este projeto utiliza **uv** para gerenciamento de dependências.
+This project uses **uv** for dependency management.
 
-Instalar dependências:
+1. **Install dependencies:**
 
 ```bash
 uv sync
 ```
+*(Alternatively, use `pip install -r requirements.txt`)*
 
-Alternativamente:
+2. **Data Preparation:**
+Place your downloaded legal PDFs (e.g., Supreme Court rulings, High Court bail orders) into the raw data folder:
 
-```bash
-pip install -r requirements.txt
+```text
+data/raw/pdfs/SC_Judgment_Kesavananda.pdf
+data/raw/pdfs/HC_Bail_Order_001.pdf
 ```
 
-## Preparação dos dados
+# Build the Vector Index
 
-Coloque os PDFs na pasta:
-
-```
-data/raw/
-```
-
-Exemplo:
-
-```
-data/raw/recurso_001.pdf
-data/raw/recurso_002.pdf
-```
-
-# Construção do índice vetorial
-
-Para criar o índice FAISS:
+To create the FAISS index, execute the ingestion script:
 
 ```bash
 uv run python scripts/build_index.py
 ```
 
-Esse processo executa:
-
+This process executes:
 ```
-PDF → chunking → embeddings → FAISS
+PDF → Chunking → Embeddings → FAISS
 ```
+The output index files will be saved in the `vector_store/` directory.
 
-Os arquivos gerados serão salvos em:
+## Execution & Example Usage
 
-```
-vector_store/
-```
-
-## Executar o sistema
-
-Execute o programa principal:
+Run the main query interface:
 
 ```bash
 uv run python main.py
 ```
 
-Exemplo de uso:
+**Example Interaction:**
 
+```text
+Question:
+What are the primary grounds for rejecting an anticipatory bail application under Indian law?
+
+Answer:
+Based on the retrieved documents, anticipatory bail can be rejected if there is a prima facie case against the accused, a likelihood of the applicant fleeing from justice, or a risk of tampering with evidence and influencing witnesses.
 ```
-Pergunta:
-Quando um recurso pode ser deferido?
 
-Resposta:
-O recurso pode ser deferido quando houver comprovação de erro na autuação ou irregularidade no processo administrativo.
-```
+## Under the Hood: Search & Reranking
 
-## Busca híbrida
+### Hybrid Search
+The system supports **Hybrid Retrieval** to capture both exact legal statutes and semantic intent:
+* **BM25**: Lexical search (great for finding exact Section numbers like "Section 438 CrPC" or specific case citations).
+* **FAISS**: Semantic search (great for conceptual queries like "protection against self-incrimination").
 
-O sistema suporta **Hybrid Retrieval**, combinando:
+This approach significantly improves the retrieval of context from complex legal documents.
 
-* **BM25** → busca lexical
-* **FAISS** → busca semântica
-
-Essa abordagem melhora significativamente a recuperação de contexto em documentos legais.
-
-## Reranking
-
-Após a recuperação inicial, os documentos são reordenados utilizando **CrossEncoder Reranker**, aumentando a relevância do contexto enviado à LLM.
-
+### Reranking Pipeline
+Because legal accuracy is critical, initial documents are re-ordered using a **CrossEncoder Reranker**, ensuring the LLM only reads the most highly relevant context.
 Pipeline:
-
-```
-Retriever → Top 10 documentos
+```text
+Retriever (Top 10)
 ↓
 Reranker
 ↓
-Top 5 documentos
+Refined Top 5
 ↓
 LLM
 ```
 
-## Exemplo de pergunta
+## Future Enhancements
 
-```
-Quando um recurso administrativo pode ser indeferido?
-```
+* **FastAPI Backend:** Expose the RAG pipeline as a RESTful API.
+* **Web Interface:** Build a frontend using Streamlit or Gradio.
+* **Automated RAG Evaluation:** Implement RAGAS to evaluate answer faithfulness and answer relevance.
+* **Query Rewriting:** Automatically expand user queries with relevant Indian legal synonyms (e.g., mapping "murder" to "Section 302 IPC / Section 103 BNS").
+* **Advanced Vector Stores:** Migrate from FAISS to Qdrant or Weaviate for metadata filtering (e.g., filtering by "Year" or "Court").
 
-A resposta será gerada com base nos documentos indexados.
+## Objective
 
-## Melhorias futuras
-
-* API com FastAPI
-* Interface web
-* Avaliação automática de RAG
-* Query rewriting
-* Multi-query retrieval
-* Context compression
-* Suporte a bancos vetoriais (Qdrant, Weaviate)
-
-## Objetivo
-
-Este projeto tem como objetivo explorar técnicas de **RAG aplicadas ao domínio jurídico**, permitindo consultas inteligentes em grandes volumes de decisões administrativas.
+This project aims to explore **RAG applied to the legal domain**, enabling intelligent natural language querying across large volumes of complex legal documents and rulings.
