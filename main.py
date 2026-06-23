@@ -1,8 +1,8 @@
 from src.llm.model import load_llm
 from src.prompts.legal_prompt import build_prompt
-from src.rerankers.cross_reranker import apply_cross_rerank
+from src.reranker.cross_encoder import apply_cross_rerank
 from src.vector_store.faiss_store import load_vector_store
-from src.retrivers.hybrid_retriver import get_hybrid_retriver
+from src.retrievers.hybrid_retriever import get_hybrid_retriver
 from src.embeddings.embedding_model import load_embeddings
 
 
@@ -23,7 +23,7 @@ def main():
 
     while True:
 
-        query = input("\nPergunta: ")
+        query = input("\nQuestion: ")
 
         if query.lower() in ["exit", "quit"]:
             break
@@ -34,11 +34,11 @@ def main():
 
         context = "\n\n".join(doc.page_content for doc in reranked_docs)
 
-        print("Analisando..")
+        print("Analyzing..")
 
         response = rag.invoke(prompt.format(context=context, question=query))
 
-        print("\nResposta:\n", response.content)
+        print("\nAnswer:\n", response.content)
 
 
 if __name__ == "__main__":

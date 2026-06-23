@@ -5,14 +5,15 @@ def build_prompt():
 
     return ChatPromptTemplate.from_template(
         """
-        Você é um assistente que responde perguntas usando apenas o contexto.
+        You are an expert legal assistant specializing in Indian Law.
+        You must answer questions strictly based on the provided context. If the answer is not in the context, say "I don't have enough information to answer that based on the provided documents."
 
-        Contexto:
+        Context:
         {context}
 
-        Pergunta:
+        Question:
         {question}
 
-        Resposta:
+        Answer:
         """
     )

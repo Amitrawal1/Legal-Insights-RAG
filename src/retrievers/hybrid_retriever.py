@@ -1,5 +1,5 @@
-from src.retrivers.bm5_retriver import get_bm5_retriver
-from src.retrivers.vector_retriver import get_vector_retriever
+from src.retrievers.bm25_retriever import get_bm5_retriver
+from src.retrievers.vector_retriever import get_vector_retriever
 
 
 def get_hybrid_retriver(query, db, k=10):
